@@ -5,6 +5,7 @@
  *
  * Purpose:
  *          Toying around with ncurses with solitare
+ *          gcc Solitare.c -o Solitare -l ncurses;  ./Solitare
  *
  *****************************************************************************/
 
@@ -17,122 +18,56 @@
 int * shuffle_deck( void );
 /* shuffles deck then returns deck array */
 
-void print_card( WINDOW * name, int y_cordinate, int x_cordinate );
-/* prints cards */
+void print_card( int y_axis, int x_axis, int value );
+/* prints cards with random value ?? still working the kinks */
 
 int main( void )
 {
     initscr();
 
+    int card_column[7] = {3, 11, 19, 27, 35, 43, 51};
+    int card_row[15] = {2, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 32, 34 };
+    int * deck = shuffle_deck( );
 
-    /* ROW 1 */
-    WINDOW * stock;
-    print_card( stock, 2, 3 );
+    for( int x = 0; x < 7; x++ )
+    /*  prints stock (1) and foundation (4) piles */
+    {
+        if( x != 1 && x != 2 )
+        {
+            print_card( card_row[0], card_column[x], 0 );
+        }
+        else
+        {
+            ; /* do nothing */
+        }
+    }
 
-    WINDOW * waste;
-    print_card( waste, 2, 11 );
-
-    WINDOW * foundation_1;
-    print_card( foundation_1, 2, 27 );
-
-    WINDOW * foundation_2;
-    print_card( foundation_2, 2, 35 );
-
-    WINDOW * foundation_3;
-    print_card( foundation_3, 2, 43 );
-
-    WINDOW * foundation_4;
-    print_card( foundation_4, 2, 51 );
-
-
-    /* ROW 2 (tableau) */
-    WINDOW * tableau_1;
-    print_card( tableau_1, 8, 3 );
-
-    WINDOW * tableau_2;
-    print_card( tableau_2, 8, 11 );
-
-    WINDOW * tableau_3;
-    print_card( tableau_3, 8, 19 );
-
-    WINDOW * tableau_4;
-    print_card( tableau_4, 8, 27 );
-
-    WINDOW * tableau_5;
-    print_card( tableau_5, 8, 35 );
-
-    WINDOW * tableau_6;
-    print_card( tableau_6, 8, 43 );
-
-    WINDOW * tableau_7;
-    print_card( tableau_7, 8, 51 );
+    for( int x = 1; x < 8; x++ )
+    /*  prints tableau piles */
+    {
+        for( int y = 0; y < 8; y++ )
+        {
+            if( x-1 > y )
+            {
+                ; /* do nothing */
+            }
+            else
+            {
+                print_card( card_row[x], card_column[y], 0 );
+            }
+        }
+    }
     getchar();
     endwin();
-
-    return 0;
-}
-
-void card_positions( void )
-{
-    /* ROW 1 */
-    WINDOW * stock;
-    print_card( stock, 2, 3 );
-
-    WINDOW * waste;
-    print_card( waste, 2, 11 );
-
-    WINDOW * foundation_1;
-    print_card( foundation_1, 2, 27 );
-
-    WINDOW * foundation_2;
-    print_card( foundation_2, 2, 35 );
-
-    WINDOW * foundation_3;
-    print_card( foundation_3, 2, 43 );
-
-    WINDOW * foundation_4;
-    print_card( foundation_4, 2, 51 );
-
-
-    /* ROW 2 (tableau) */
-    WINDOW * tableau_1;
-    print_card( tableau_1, 8, 3 );
-
-    WINDOW * tableau_2;
-    print_card( tableau_2, 8, 11 );
-
-    WINDOW * tableau_3;
-    print_card( tableau_3, 8, 19 );
-
-    WINDOW * tableau_4;
-    print_card( tableau_4, 8, 27 );
-
-    WINDOW * tableau_5;
-    print_card( tableau_5, 8, 35 );
-
-    WINDOW * tableau_6;
-    print_card( tableau_6, 8, 43 );
-
-    WINDOW * tableau_7;
-    print_card( tableau_7, 8, 51 );
-}
-
-void print_card( WINDOW * name, int y_cordinate, int x_cordinate )
-{
-
-    name = newwin( 6 , 8 , y_cordinate , x_cordinate );
-    box( name, '|', '-' );
-
-    touchwin( name );
-    wrefresh( name );
 }
 
 int * shuffle_deck( void )
+/* shuffles deck then returns deck array */
 {
     static int deck[51];
     int of_a_kind;
 
-    for( int x=0; x <= 51; x++ )
+        for( int x=0; x <= 51; x++ )
     /* for each card in deck, assign a random card value */
     {
         do
@@ -159,6 +94,41 @@ int * shuffle_deck( void )
         }
         while( of_a_kind == 0 );
     }
-
     return deck;
+}
+
+void print_card( int y_axis, int x_axis, int value )
+{
+    WINDOW * card = newwin( 6 , 8 , y_axis, x_axis );
+    box( card, 0, 0 );
+
+
+    if( value == 0 )
+    {
+        ; /* do nothing */
+    }
+    else if( value <= 9 )
+    {
+        mvwprintw( card, 1, 6, "%d", value);
+    }
+    else if( value == 10 )
+    {
+        mvwprintw( card, 1, 5, "%d", value);
+    }
+    else if( value == 11 )
+    {
+        mvwprintw( card, 1, 6, "J");
+    }
+    else if( value == 12 )
+    {
+        mvwprintw( card, 1, 6, "Q");
+    }
+    else if( value == 13 )
+    {
+        mvwprintw( card, 1, 6, "K");
+    }
+
+    touchwin( card );
+    wrefresh( card );
+
 }
