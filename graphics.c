@@ -22,157 +22,126 @@
  *
  *****************************************************************************/
 
-
-
-#include <curses.h>
-#include <stdlib.h>         /* dynamic memory and random numbers            */
-#include <ncurses.h>        /* graphical interface                          */
 #include "functions.h"      /* solitaire functions                          */
 
-
-
-void prerequisites( int y_max, int x_max )
-    /* Checks for terminal size and color support */
+void prerequisites( void )
+  /* Checks for terminal size and color support */
 {
-    /* Checks terminal for color */
-    if( has_colors() == false )
-    {
-        endwin();
-        printf("ERROR: Terminal does not support color\n");
-        exit(1);
-    }
-    else
-    {
-        start_color();
-    }
+  int col, row;
+  getmaxyx(stdscr, col, row);
+  /* Checks terminal for color */
+  if( has_colors() == false )
+  {
+    endwin();
+    printf("ERROR: Terminal does not support color\n");
+    exit(1);
+  }
+  else
+  {
+    start_color();
+  }
 
 
-    /* Checks terminal size */
-    if(  y_max < 27 || x_max < 62 )
-    {
-        endwin();
-        printf("ERROR: Terminal is too small (required: 62x27); Current size: %dx%d\n", x_max, y_max );
-        exit(1);
-    }
+  /* Checks terminal size */
+  if(  col < 27 || row < 62 )
+  {
+    endwin();
+    printf("ERROR: Terminal is too small (required: 62x27); ");
+    printf("Current size: %dx%d\n", row, col );
+    exit(1);
+  }
 }
 
 
-void print_card( int y_axis, int x_axis, int value, int suite )
-    /* prints cards with random value ?? still working the kinks */
+void print_background( void )
 {
-    WINDOW * card = newwin( 6 , 8 , y_axis, x_axis );
-    char suite_array[] = "#$%&";
-    /* char suite_array[] = "♥️♦️♣️♠️"; // ncurses != emoji support */
+  int col, row;
+  getmaxyx(stdscr, col, row);
+
+  WINDOW * background = newwin( col, row, 0, 0 );
+
+  wbkgd( background, COLOR_PAIR(4) );  /* card outline  */
+  box( background, 0, 0 );
+
+  touchwin( background );
+  wrefresh( background );
+  endwin();
+}
 
 
-    init_pair( 1, COLOR_WHITE, COLOR_GREEN);
-    init_pair( 2, COLOR_BLACK, COLOR_WHITE );
-    init_pair( 3, COLOR_RED, COLOR_WHITE );
-    init_pair( 4, COLOR_GREEN, COLOR_GREEN );
-
-    wbkgd( card, COLOR_PAIR(2) );     /* card filler*/
-    wattrset( card, COLOR_PAIR(1) );  /* card outline  */
+void print_foundations( int **coordinates )
+{
+  for( int i = 3; i < 7; i++ )
+  {
+    WINDOW *card = newwin( 6 , 8 , coordinates[0][0] , coordinates[i][1] );
+    wattron( card, COLOR_PAIR(1) );  /* card outline  */
+    wbkgd(card, COLOR_PAIR(1));
     box( card, 0, 0 );
-
-    if( suite < 3 )
-        /* if card is a heart or diamond, then card print color is red */
-    {
-        wattrset( card, COLOR_PAIR( 3 ) );
-    }
-    else if( suite > 2 )
-        /* if card is a clubs or spades, then card print color is black */
-    {
-        wattrset( card, COLOR_PAIR( 2 ) );
-    }
-
-    if( value == 0 )
-        /* determines card value to set printing location and what is printed */
-    {
-        ; /* do nothing */
-    }
-    else if( value == 1 )
-    {
-        mvwprintw( card, 1, 5, "A");
-    }
-    else if( value < 10 )
-    {
-        mvwprintw( card, 1, 5, "%d", value);
-    }
-    else if( value == 10 )
-    {
-        mvwprintw( card, 1, 4, "%d", value);
-    }
-    else if( value == 11 )
-    {
-        mvwprintw( card, 1, 5, "J");
-    }
-    else if( value == 12 )
-    {
-        mvwprintw( card, 1, 5, "Q");
-    }
-    else if( value == 13 )
-    {
-        mvwprintw( card, 1, 5, "K");
-    }
-
-
-    if( suite > 0 && suite < 5 )
-        /* determines card suite to set what is printed */
-    {
-        wprintw(card, "%c",suite_array[suite - 1]) ;
-    }
-    else
-    {
-        ; /* do nothing */
-    }
-
-
     touchwin( card );
     wrefresh( card );
+  }
 }
 
 
-void print_background( int y_max, int x_max )
+void print_stock( int **coordinates, int **deck, int value, int suite)
 {
-    WINDOW * background = newwin( y_max, x_max, 0, 0 );
+  WINDOW *stock_hide = newwin( 6 , 8 , coordinates[0][0] , coordinates[0][1] );
+  WINDOW *stock_show = newwin( 6 , 8 , coordinates[0][0] , coordinates[1][1] );
 
-    init_pair( 1, COLOR_GREEN, COLOR_BLACK );
-
-    wbkgd( background, COLOR_PAIR(1) );
-    wattrset( background, COLOR_PAIR(1) );  /* card outline  */
-    box( background, 0, 0 );
-
-    touchwin( background );
-    wrefresh( background );
-
-}
-
-
-void set_table( int *row, int *col, int **deck )
-{
-    int z = 0;
-
-    for( int x = 0; x < 7; x++ )
-        /*  prints stock (1) and foundation (4) piles */
+    if( value != deck[51][0] || suite != deck[51][1])
     {
-        if( x != 1 && x != 2 )
-        {
-            print_card( row[0], col[x], 0, 0 );
-        }
+      box( stock_hide, 0, 0 );
+      wbkgd( stock_hide, COLOR_PAIR(1) );  /* card outline  */
+      wattrset( stock_hide, COLOR_PAIR( 5 ) );
+      for( int i = 1; i < 5; i++ )
+      {
+        mvwprintw( stock_hide, i, 1, "XXXXXX");
+      }
+      touchwin( stock_hide );
+      wrefresh( stock_hide );
     }
 
-    for( int x = 0; x <= 7; x++ )
-        /*  prints tableau piles */
+    if( value != 0 )
     {
-        for( int y = 0; y <= 7; y++ )
-        {
-            if( x < y )
-            {
-                print_card( row[x+1], col[y-1], deck[z][0], deck[z][1] );
-                z++;
-            }
-        }
+      wattrset( stock_show, COLOR_PAIR(1) );  /* card outline  */
+      box( stock_show, 0, 0 );
+      print_card( stock_show, value, suite, 1, 1 );
+      touchwin( stock_show );
+      wrefresh( stock_show );
+
     }
+  }
+
+
+void print_tableau(int ***tableau )
+{
+  //char suite_arracol[] = "♥️♦️♣️♠️"; ncurses != emoji support
+
+  for( int row = 0; row < 7; row++ )
+  {
+    for( int col = 0; col < 15; col++ )
+    {
+
+      if( tableau[row][col][2] == 1 ||  tableau[row][col][2] == 2 )
+      {/* if card is shown or clicked... */
+
+      WINDOW *card = newwin( 4 , 6 ,tableau[row][col][3]-col, tableau[row][col][4]+1 );
+
+        print_card( card, tableau[row][col][0], tableau[row][col][1], tableau[row][col][2], 0 );
+        touchwin( card );
+        wrefresh( card );
+
+      }
+      else if( tableau[row][col][2] == 0 )
+      {
+        WINDOW *card = newwin( 1 , 6 ,tableau[row][col][3]-col, tableau[row][col][4]+1 );
+        wattrset( card, COLOR_PAIR(1) );  /* card outline  */
+        wattrset( card, COLOR_PAIR( 5 ) );
+        box( card, 0, 0 );
+        touchwin( card );
+        wrefresh( card );
+
+      }
+    }
+  }
 }
-
-
